@@ -73,20 +73,22 @@ namespace PuppetViewerWPF
 
 
             // Create a new FileSystemWatcher and set its properties
-            _watcher = new FileSystemWatcher
+            try
             {
-                Path = directoryPath,
-                Filter = fileName,
-                NotifyFilter = NotifyFilters.LastWrite // Monitor changes to the file's LastWrite time
-            };
+                _watcher = new FileSystemWatcher
+                {
+                    Path = directoryPath,
+                    Filter = fileName,
+                    NotifyFilter = NotifyFilters.LastWrite // Monitor changes to the file's LastWrite time
+                };
 
-            // Add event handlers
-            _watcher.Changed += OnChanged;
+                // Add event handlers
+                _watcher.Changed += OnChanged;
 
-            // Begin watching
-            _watcher.EnableRaisingEvents = true;
-
-            Console.WriteLine($"Monitoring changes to: {System.IO.Path.Combine(directoryPath, fileName)}");
+                // Begin watching
+                _watcher.EnableRaisingEvents = true;
+            }
+            catch { }
         }
 
         // Define the non-static event handler
@@ -110,6 +112,12 @@ namespace PuppetViewerWPF
             var helper = new WindowInteropHelper(this);
             UnregisterHotKey(helper.Handle, HOTKEY_ID);
             base.OnClosed(e);
+
+            if (_overlayWindow != null)
+            {
+                _overlayWindow.Close();
+                _overlayWindow = null;
+            }
         }
 
         class TextToggleState
@@ -145,7 +153,7 @@ namespace PuppetViewerWPF
         {
             if (_overlayWindow == null || !_overlayWindow.IsVisible)
             {
-                string targetWindowTitle = "TPDP"; // must match part of the window title
+                string targetWindowTitle = "TPDP Shard of Dreams"; // must match part of the window title
                 _overlayWindow = new OverlayWindow(targetWindowTitle);
                 _overlayWindow.Show();
                 updateList();
