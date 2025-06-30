@@ -5,6 +5,8 @@ For use with Touhou Puppet Dance Performance Shard of Dreams Extended v4
 
 ![ScreenshotS](https://github.com/user-attachments/assets/b9a44a05-b7e8-426e-afd2-074ad2abe668) ![CaptureS](https://github.com/user-attachments/assets/26f72511-78cc-4f85-865d-1ef130275560)
 
+## Download
+[v0.1](https://github.com/x-Cody-z/PuppetViewerWPF/releases/download/v0.1/Puppet.Viewer.zip)
 ## Setup
 
  - Make sure you have Extended v4 mod for TPDP, this program uses a
