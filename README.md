@@ -9,8 +9,8 @@ For use with Touhou Puppet Dance Performance Shard of Dreams Extended v4
 
  - Make sure you have Extended v4 mod for TPDP, this program uses a
    modified dll from it.
- - Copy the dxgi.dll into the game directory, it should overwrite the
-   existing one
+ - Copy dxgi.dll and TPDPHook.ini into the game directory, they should overwrite the
+   existing ones
  - Open Puppet Viewer, click the ? button and open the game .exe
 
 ## Instructions

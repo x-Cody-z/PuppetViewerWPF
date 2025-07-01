@@ -83,7 +83,7 @@ namespace PuppetViewerWPF
                 };
 
                 // Add event handlers
-                _watcher.Changed += OnChanged;
+                _watcher.Changed += OnChangedAsync;
 
                 // Begin watching
                 _watcher.EnableRaisingEvents = true;
@@ -92,9 +92,21 @@ namespace PuppetViewerWPF
         }
 
         // Define the non-static event handler
-        private void OnChanged(object sender, FileSystemEventArgs e)
+        private async void OnChangedAsync(object sender, FileSystemEventArgs e)
         {
-            updateList();
+            try
+            {
+                // Temporarily disable the watcher
+                _watcher.EnableRaisingEvents = false;
+                updateList();
+                await Task.Delay(1000);
+
+            }
+            finally
+            {
+                // Re-enable the watcher
+                _watcher.EnableRaisingEvents = true;
+            }
         }
 
         protected override void OnClosed(EventArgs e)
@@ -104,7 +116,7 @@ namespace PuppetViewerWPF
             // Clean up the watcher when the window is closed
             if (_watcher != null)
             {
-                _watcher.Changed -= OnChanged;
+                _watcher.Changed -= OnChangedAsync;
                 _watcher.Dispose();
             }
 
@@ -149,14 +161,48 @@ namespace PuppetViewerWPF
             { "None",     Colors.Transparent }
         };
 
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
+        int X, int Y, int cx, int cy, uint uFlags);
+
+        static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+
+        const UInt32 SWP_NOACTIVATE = 0x0010;
+        const UInt32 SWP_NOMOVE = 0x0002;
+        const UInt32 SWP_NOSIZE = 0x0001;
+        const UInt32 SWP_SHOWWINDOW = 0x0040;
+
         private void ShowOverlay()
         {
             if (_overlayWindow == null || !_overlayWindow.IsVisible)
             {
+                if (_overlayWindow != null) { _overlayWindow.Close(); }
                 string targetWindowTitle = "TPDP Shard of Dreams"; // must match part of the window title
                 _overlayWindow = new OverlayWindow(targetWindowTitle);
                 _overlayWindow.Show();
+
+                // Force layout and visibility update manually
+                //_overlayWindow.InvalidateVisual();
+                //_overlayWindow.UpdateLayout();
+
                 updateList();
+
+                /*
+                Task.Run(async () =>
+                {
+                    await Task.Delay(50); // Allow time for Windows to finish its Z-order rearranging
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        var hwnd = new WindowInteropHelper(_overlayWindow).Handle;
+
+                        SetWindowPos(hwnd, HWND_TOPMOST,
+                            0, 0, 0, 0,
+                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+                    });
+                });
+                */
+
             }
             else
             {

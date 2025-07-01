@@ -25,92 +25,114 @@ namespace PuppetViewerWPF
     {
         private IntPtr targetHwnd;
         private string targetWindowTitle;
+        private bool isOverlayVisible = false;
 
-        public OverlayWindow(string windowTitle)
+        public OverlayWindow(string title)
         {
             InitializeComponent();
-            // Try to find the external window
+            targetWindowTitle = title;
 
-            //targetHwnd = FindWindowByTitle(targetWindowTitle);
-            //if (targetHwnd == IntPtr.Zero)
-            //{
-            //    MessageBox.Show("Target window not found.");
-            //    Close();
-            //    return;
-            //}
-            
-            // Set up a timer to follow the target window
-            var timer = new System.Windows.Threading.DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(100)
-            };
-            timer.Tick += (s, e) => UpdateOverlayPosition();
-            timer.Start();
-
-            this.targetWindowTitle = windowTitle;
+            Loaded += OverlayWindow_Loaded;
+            Unloaded += OverlayWindow_Unloaded;
         }
-        [DllImport("user32.dll")]
-        static extern IntPtr GetForegroundWindow();
 
-        [DllImport("user32.dll")]
-        static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
-        int X, int Y, int cx, int cy, uint uFlags);
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
 
-        private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
-        private static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
-        private static readonly IntPtr HWND_TOP = new IntPtr(0);
-        private static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
+            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+            int exStyle = (int)GetWindowLong(hwnd, GWL_EXSTYLE);
+            exStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | WS_EX_LAYERED;
+            SetWindowLong(hwnd, GWL_EXSTYLE, new IntPtr(exStyle));
 
-        private const uint SWP_NOACTIVATE = 0x0010;
-        private const uint SWP_NOSIZE = 0x0001;
-        private const uint SWP_NOMOVE = 0x0002;
-        private const uint SWP_SHOWWINDOW = 0x0040;
-
-        private bool isOverlayVisible = false;
+            // Force topmost and visible
+            SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+        }
 
         private void UpdateOverlayPosition()
         {
-            // Bail out early if the window is closing or has been closed
-            if (!this.IsLoaded) //|| !this.IsVisible)
-                return;
+            IntPtr hwnd = FindWindowByTitle(targetWindowTitle);
+            if (hwnd != IntPtr.Zero && GetWindowRect(hwnd, out RECT rect))
+            {
+                this.Left = rect.Left;
+                this.Top = rect.Top;
+                this.Width = rect.Right - rect.Left;
+                this.Height = rect.Bottom - rect.Top;
 
-            IntPtr newHwnd = FindWindowByTitle(targetWindowTitle);
-            if (newHwnd == IntPtr.Zero)
+                var thisHwnd = new WindowInteropHelper(this).Handle;
+                SetWindowPos(thisHwnd, HWND_TOPMOST, 0, 0, 0, 0,
+                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+
+                this.Visibility = Visibility.Visible;
+                isOverlayVisible = true;
+            }
+            else
             {
                 this.Visibility = Visibility.Hidden;
                 isOverlayVisible = false;
+            }
+        }
+
+        private void OverlayWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            UpdateOverlayPosition(); // manual 1-time update
+            CompositionTarget.Rendering += OnRendering;
+
+            // Apply window styles and force topmost
+            var hwnd = new WindowInteropHelper(this).Handle;
+            int exStyle = (int)GetWindowLong(hwnd, GWL_EXSTYLE);
+            exStyle |= WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT;
+            SetWindowLong(hwnd, GWL_EXSTYLE, new IntPtr(exStyle));
+
+            SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+        }
+
+        private void OverlayWindow_Unloaded(object sender, RoutedEventArgs e)
+        {
+            CompositionTarget.Rendering -= OnRendering;
+        }
+
+        private void OnRendering(object sender, EventArgs e)
+        {
+            IntPtr hwnd = FindWindowByTitle(targetWindowTitle);
+            if (hwnd == IntPtr.Zero)
+            {
+                if (isOverlayVisible)
+                {
+                    this.Visibility = Visibility.Hidden;
+                    isOverlayVisible = false;
+                }
                 return;
             }
 
-            targetHwnd = newHwnd;
+            targetHwnd = hwnd;
 
             if (!GetWindowRect(targetHwnd, out RECT rect))
                 return;
 
-            // Check if target window is currently focused
             IntPtr foreground = GetForegroundWindow();
 
             if (foreground == targetHwnd)
             {
-                // Make overlay visible if hidden
                 if (!isOverlayVisible)
                 {
                     this.Visibility = Visibility.Visible;
                     isOverlayVisible = true;
                 }
 
-                // Always follow position
                 this.Left = rect.Left;
                 this.Top = rect.Top;
                 this.Width = rect.Right - rect.Left;
                 this.Height = rect.Bottom - rect.Top;
 
-                // Ensure overlay is topmost
-                this.Topmost = true;
+                var thisHwnd = new WindowInteropHelper(this).Handle;
+                SetWindowPos(thisHwnd, HWND_TOPMOST, 0, 0, 0, 0,
+                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
             }
             else
             {
-                // Hide overlay if not focused
                 if (isOverlayVisible)
                 {
                     this.Visibility = Visibility.Hidden;
@@ -119,59 +141,86 @@ namespace PuppetViewerWPF
             }
         }
 
-        private IntPtr FindWindowByTitle(string title)
+        // Helper: Find a window by part of its title
+        private static IntPtr FindWindowByTitle(string title)
         {
-            foreach (Process proc in Process.GetProcesses())
+            foreach (IntPtr hwnd in EnumerateAllWindows())
             {
-                if (!string.IsNullOrEmpty(proc.MainWindowTitle) && proc.MainWindowTitle.Contains(title))
-                    return proc.MainWindowHandle;
+                if (GetWindowText(hwnd, out string text) && text.Contains(title))
+                    return hwnd;
             }
             return IntPtr.Zero;
         }
 
-        protected override void OnSourceInitialized(EventArgs e)
+        private static IEnumerable<IntPtr> EnumerateAllWindows()
         {
-            base.OnSourceInitialized(e);
-            IntPtr hwnd = new WindowInteropHelper(this).Handle;
-            int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-            SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_LAYERED | WS_EX_TRANSPARENT);
+            var windows = new List<IntPtr>();
+            EnumWindows((hWnd, lParam) =>
+            {
+                windows.Add(hWnd);
+                return true;
+            }, IntPtr.Zero);
+            return windows;
         }
 
-        // Win32 declarations
+        private static bool GetWindowText(IntPtr hWnd, out string text)
+        {
+            int length = GetWindowTextLength(hWnd);
+            var builder = new System.Text.StringBuilder(length + 1);
+            GetWindowText(hWnd, builder, builder.Capacity);
+            text = builder.ToString();
+            return text.Length > 0;
+        }
+
+        // WIN32 interop
+        [DllImport("user32.dll")]
+        static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll")]
+        static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        static extern int GetWindowTextLength(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
+
+        [DllImport("user32.dll")]
+        static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        static extern IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll")]
+        static extern IntPtr SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
+            int X, int Y, int cx, int cy, uint uFlags);
+
+        const int GWL_EXSTYLE = -20;
+        const int WS_EX_TOOLWINDOW = 0x00000080;
+        const int WS_EX_NOACTIVATE = 0x08000000;
+        const int WS_EX_TRANSPARENT = 0x00000020;
+        const int WS_EX_LAYERED = 0x80000;
+
+        static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+
+        const UInt32 SWP_NOMOVE = 0x0002;
+        const UInt32 SWP_NOSIZE = 0x0001;
+        const UInt32 SWP_NOACTIVATE = 0x0010;
+        const UInt32 SWP_SHOWWINDOW = 0x0040;
+
         [StructLayout(LayoutKind.Sequential)]
         public struct RECT
         {
             public int Left, Top, Right, Bottom;
         }
 
-        [DllImport("user32.dll")]
-        static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
-        [DllImport("user32.dll")]
-        static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll")]
-        static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-
-        const int GWL_EXSTYLE = -20;
-        const int WS_EX_LAYERED = 0x80000;
-        const int WS_EX_TRANSPARENT = 0x20;
-
-
-
-        internal static class NativeMethods
-        {
-            public const int GWL_EXSTYLE = -20;
-            public const int WS_EX_TRANSPARENT = 0x20;
-            public const int WS_EX_LAYERED = 0x80000;
-
-            [DllImport("user32.dll")]
-            public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-
-            [DllImport("user32.dll")]
-            public static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-        }
-
+        //Overlay Visuals
+        
         Color GetColorFromBrush(Brush brush)
         {
             if (brush is SolidColorBrush solidColorBrush)
@@ -182,7 +231,7 @@ namespace PuppetViewerWPF
 
         private TextBlock CreateEffTextBlock(string text, Brush foreground, Brush background, bool rightAlign)
         {
-            rightAlign = !rightAlign;
+            //rightAlign = !rightAlign;
             Color bgColor = GetColorFromBrush(background);
             var gradientBrush = new LinearGradientBrush
             {
@@ -190,8 +239,8 @@ namespace PuppetViewerWPF
                 EndPoint = rightAlign ? new Point(0, 0) : new Point(1, 0),   // left to right or right to left
                 GradientStops = new GradientStopCollection
                 {
-                    new GradientStop(bgColor, 0.3),
-                    new GradientStop(Color.FromArgb(0, bgColor.R, bgColor.G, bgColor.B), 0.9)
+                    new GradientStop(bgColor, 0.2),
+                    new GradientStop(Color.FromArgb(0, bgColor.R, bgColor.G, bgColor.B), 0.7)
                 }
             };
 
