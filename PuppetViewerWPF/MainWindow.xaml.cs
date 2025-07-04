@@ -91,11 +91,16 @@ namespace PuppetViewerWPF
             catch { }
         }
 
+        private bool _isProcessing = false;
         // Define the non-static event handler
         private async void OnChangedAsync(object sender, FileSystemEventArgs e)
         {
             try
             {
+                //MessageBox.Show("watchers updated");
+                if (_isProcessing) return;
+                _isProcessing = true;
+
                 // Temporarily disable the watcher
                 if (updateList())
                 {
@@ -108,6 +113,7 @@ namespace PuppetViewerWPF
             {
                 // Re-enable the watcher
                 _watcher.EnableRaisingEvents = true;
+                _isProcessing = false;
             }
         }
 
@@ -762,6 +768,52 @@ namespace PuppetViewerWPF
         }
 
 
+        private bool IsSharingViolation(IOException ex)
+        {
+            const int ERROR_SHARING_VIOLATION = 0x20;
+            const int ERROR_LOCK_VIOLATION = 0x21;
+
+            int hresult = System.Runtime.InteropServices.Marshal.GetHRForException(ex) & 0xFFFF;
+            return hresult == ERROR_SHARING_VIOLATION || hresult == ERROR_LOCK_VIOLATION;
+        }
+
+
+        private List<string[]> SafeExclusiveReadCsv(string filePath, int maxRetries = 10, int delayMs = 200)
+        {
+            for (int attempt = 0; attempt < maxRetries; attempt++)
+            {
+                try
+                {
+                    // Try to open file with exclusive access
+                    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                    using (StreamReader reader = new StreamReader(fs))
+                    {
+                        var data = new List<string[]>();
+                        string line;
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            string[] fields = line.Split(',');
+                            data.Add(fields);
+                        }
+                        return data;
+                    }
+                }
+                catch (IOException ex)
+                {
+                    Thread.Sleep(delayMs);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Thread.Sleep(delayMs);
+                }
+                catch { }
+            }
+
+            // If we can't get exclusive access after retries, return null or throw
+            return null;
+        }
+
+
 
         private string ReadCsvPathFromConfig()
         {
@@ -789,75 +841,62 @@ namespace PuppetViewerWPF
         private List<string[]> LoadCSV()
         {
             string filePath = ReadCsvPathFromConfig();
-            if (filePath == null)
-            {
-                return null;
-            }
-
-            // List to store arrays representing each row in the CSV
-            List<string[]> csvData = new List<string[]>();
-
-            // Read the CSV file line by line
-            try
-            {
-                using (StreamReader reader = new StreamReader(filePath))
-                {
-                    string line;
-                    while ((line = reader.ReadLine()) != null)
-                    {
-                        // Split the line into fields based on comma delimiter
-                        string[] fields = line.Split(',');
-                        csvData.Add(fields);
-                    }
-                }
-                return csvData;
-            }
-            catch
-            {
-                return null;
-            }
+            return filePath != null ? SafeExclusiveReadCsv(filePath) : null;
         }
 
-        private List<string[]> LoadCSVEnemyData(string player)
+        private List<string[]> LoadCSVEnemyData(string section, int maxRetries = 10, int delayMs = 200)
         {
             string filePath = ReadCsvPathFromConfig();
             if (filePath == null)
-            {
                 return null;
-            }
 
-            List<string[]> rows = new List<string[]>();
-            bool inEnemySection = false;
-            try
+            for (int attempt = 0; attempt < maxRetries; attempt++)
             {
-
-                foreach (var line in File.ReadLines(filePath))
+                try
                 {
-                    if (line.Trim() == player)
+                    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                    using (StreamReader reader = new StreamReader(fs))
                     {
-                        inEnemySection = true;
-                        continue;
+                        var rows = new List<string[]>();
+                        bool inSection = false;
+
+                        string line;
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            if (line.Trim() == section)
+                            {
+                                inSection = true;
+                                continue;
+                            }
+
+                            if (!inSection)
+                                continue;
+
+                            if (string.IsNullOrWhiteSpace(line))
+                                break;
+
+                            string[] fields = line.Split(',');
+
+                            if (fields[0].Trim() == "0")
+                                continue;
+
+                            rows.Add(fields);
+                        }
+
+                        return rows;
                     }
-
-                    if (!inEnemySection)
-                        continue;
-
-                    if (string.IsNullOrWhiteSpace(line))
-                        break;
-
-                    string[] fields = line.Split(',');
-                    if (fields[0].Trim() == "0")
-                        continue;
-
-                    rows.Add(fields);
                 }
+                catch (IOException ex)
+                {
+                    Thread.Sleep(delayMs);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Thread.Sleep(delayMs);
+                }
+            }
 
-                return rows;
-            }
-            catch
-            {
-                return null;
-            }
+            return null;
         }
 
         private bool updateList()
