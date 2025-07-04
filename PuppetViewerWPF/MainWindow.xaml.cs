@@ -97,9 +97,11 @@ namespace PuppetViewerWPF
             try
             {
                 // Temporarily disable the watcher
-                _watcher.EnableRaisingEvents = false;
-                updateList();
-                await Task.Delay(1000);
+                if (updateList())
+                {
+                    _watcher.EnableRaisingEvents = false;
+                    await Task.Delay(1000);
+                }
 
             }
             finally
@@ -858,16 +860,17 @@ namespace PuppetViewerWPF
             }
         }
 
-        private void updateList()
+        private bool updateList()
         {
             List<string[]> puppetsData = LoadCSVEnemyData(_player);
             if (puppetsData == null)
             {
-                puppetsData = _oldEnemyData;
+                //puppetsData = _oldEnemyData;
+                return false;
             }
             else if (puppetsData == _oldEnemyData)
             {
-                return;
+                return false;
             }
             else
             {
@@ -881,6 +884,7 @@ namespace PuppetViewerWPF
                 {
                     _overlayWindow.UpdateOverlay(GetOverlayData(csv, enemyData, playerData));
                 }
+                return true;
             }
         }
 
