@@ -3,9 +3,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PuppetViewerWPF;
 using System;
+//using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
@@ -28,14 +30,31 @@ namespace PuppetViewerWPF
     public partial class MainWindow : Window
     {
         private FileSystemWatcher _watcher;
-        private JObject _jsonObject;
+        private JObject _jsonObjectDoll; // doll data JSON object
+        private JObject _jsonObjectSkills; // skills JSON object
         private List<string[]> _oldEnemyData;
         private string _player;
         private OverlayWindow _overlayWindow;
+        private Calc _calcWindow;
+
 
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private JObject ReadJsonFromFile(string filePath)
+        {
+            try
+            {
+                string json = File.ReadAllText(filePath);
+                return JObject.Parse(json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reading JSON file: {ex.Message}");
+                return null;
+            }
         }
 
 
@@ -51,23 +70,9 @@ namespace PuppetViewerWPF
             _oldEnemyData = new List<string[]>();
             _player = "Enemy";
 
-            try
-            {
-                string filePath = "DollData.json";
-                // Read the entire JSON file into a string
-                string json = File.ReadAllText(filePath);
+            _jsonObjectDoll = ReadJsonFromFile("DollData.json");
+            _jsonObjectSkills = ReadJsonFromFile("SkillData.json");
 
-                // Parse the JSON string into a JObject
-                _jsonObject = JObject.Parse(json);
-            }
-            catch (FileNotFoundException)
-            {
-                MessageBox.Show($"File DollData.json not found.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error reading JSON file: {ex.Message}");
-            }
 
             ShowOverlay();
 
@@ -144,7 +149,9 @@ namespace PuppetViewerWPF
         {
             public Inline[] StateA { get; set; }
             public Inline[] StateB { get; set; }
-            public bool IsExpanded { get; set; }
+            public Inline[] StateC { get; set; }
+            //public bool IsExpanded { get; set; }
+            public int CurrentState { get; set; } = 0; // 0 for StateA, 1 for StateB, 2 for StateC
         }
 
         private static readonly Dictionary<string, Color> TypeColors = new Dictionary<string, Color>(StringComparer.OrdinalIgnoreCase)
@@ -318,6 +325,68 @@ namespace PuppetViewerWPF
             };
         }
 
+        private string[] GetSkillData(string skillId)
+        {
+            JArray skills = _jsonObjectSkills["skills"] as JArray;
+            if (skills == null)
+                return Array.Empty<string>();
+
+            foreach (var skill in skills)
+            {
+                if ((string)skill["id"] == skillId)
+                {
+                    var values = new List<string>();
+                    foreach (var property in skill.Children<JProperty>())
+                    {
+                        values.Add(property.Value.ToString());
+                    }
+                    return values.ToArray();
+                }
+            }
+
+            return Array.Empty<string>();
+        }
+
+        private static string GetItemName(int item_index)
+        {
+            var lines = File.ReadAllLines(@"ItemData.csv");
+
+            if (item_index < 0 || item_index >= lines.Length)
+                return null; // or throw exception
+
+            string line = lines[item_index + 1]; // index matches line number
+            string[] parts = line.Split(',');
+
+            if (parts.Length >= 2)
+                return parts[1]; // second column is name
+
+            return null;
+        }
+
+        private static string GetItemDesc(int item_index)
+        {
+            var lines = File.ReadAllLines(@"ItemData.csv");
+
+            if (item_index < 0 || item_index >= lines.Length)
+                return null; // or throw exception
+
+            string line = lines[item_index + 1]; // index matches line number
+            string[] parts = line.Split(',');
+
+            if (parts.Length >= 11)
+            {
+                string result = "";
+                for (int i = 11; i < parts.Length; i++)
+                {
+                    result += parts[i];
+                    if (i < parts.Length - 1)
+                        result += ",";
+                }
+                return result; // subsequent columns are description (stating from index 11/ column 12)
+            }
+            return null;
+        }
+
         private int GetPuppetActiveIndex(List<string[]> csv, int player)
         {
             return int.Parse(csv[17 + player][0]);
@@ -350,7 +419,16 @@ namespace PuppetViewerWPF
             string[] parts = line.Split(',');
 
             if (parts.Length >= 2)
-                return parts[2]; // third column is desc
+            {
+                string result = "";
+                for (int i = 2; i < parts.Length; i++)
+                {
+                    result += parts[i];
+                    if (i < parts.Length - 1)
+                        result += ",";
+                }
+                return result; // subsequent columns are description (stating from index 2/ column 3)
+            }
 
             return null;
         }
@@ -360,7 +438,7 @@ namespace PuppetViewerWPF
             int index = int.Parse(style_index);
 
             // Get the styles array for the specified id
-            JToken puppet = _jsonObject["puppets"]?.FirstOrDefault(p => (string)p["id"] == id);
+            JToken puppet = _jsonObjectDoll["puppets"]?.FirstOrDefault(p => (string)p["id"] == id);
 
             if (puppet != null)
             {
@@ -388,7 +466,7 @@ namespace PuppetViewerWPF
             int index = int.Parse(style_index);
 
             // Get the styles array for the specified id
-            JToken puppet = _jsonObject["puppets"]?.FirstOrDefault(p => (string)p["id"] == id);
+            JToken puppet = _jsonObjectDoll["puppets"]?.FirstOrDefault(p => (string)p["id"] == id);
 
             if (puppet != null)
             {
@@ -418,7 +496,7 @@ namespace PuppetViewerWPF
             int index = int.Parse(style_index);
 
             // Get the styles array for the specified id
-            JArray styles = (JArray)_jsonObject["puppets"].FirstOrDefault(p => (string)p["id"] == id)?["styles"];
+            JArray styles = (JArray)_jsonObjectDoll["puppets"].FirstOrDefault(p => (string)p["id"] == id)?["styles"];
 
             if (styles != null && index < styles.Count)
             {
@@ -633,7 +711,7 @@ namespace PuppetViewerWPF
 
 
                         
-                        
+                        //State B
                         List<Inline> stateBruns = new List<Inline>();
 
                         string statHeadings = "HP".PadRight(5) + "FOA".PadRight(5) + "FOD".PadRight(5) + "SPA".PadRight(5) + "SPD".PadRight(5) + "SPE";
@@ -671,7 +749,7 @@ namespace PuppetViewerWPF
                             string abilityText = "";
                             if(j < abilitiesIndex.Count - 1)
                             {
-                                abilityText = GetPuppetAbilityName(abilitiesIndex[j]) + "\t";
+                                abilityText = GetPuppetAbilityName(abilitiesIndex[j]) + "    ";
                             }
                             else
                             {
@@ -681,7 +759,7 @@ namespace PuppetViewerWPF
                             Run abilityRun = new Run(abilityText);
                             Hyperlink abilityLink = new Hyperlink(abilityRun)
                             {
-                                Foreground = Brushes.White,
+                                Foreground = Brushes.LightGray,
                                 ToolTip = GetPuppetAbilityDesc(abilitiesIndex[j]),
                                 TextDecorations = null,
                                 FontStyle = FontStyles.Italic
@@ -696,34 +774,115 @@ namespace PuppetViewerWPF
                             statsInline[j] = stateBruns[j];
                         }
 
+                        //State C
+                        List<Inline> stateCruns = new List<Inline>();
+                        for (int j = 19; j < 23; j++)
+                        {
+                            
+                            //id, name, element, type, sp, accuracy, power, prio, effect%, effect id, effect target, ynk classification
+                            string[] skillData = GetSkillData(PuppetData[i][j]);
+
+                            if (skillData.Length == 0 || skillData[0] == "0") continue; // Skip if no skill data or skill ID is 0
+
+                            var bgColor = TypeColors.ContainsKey(skillData[2]) ? TypeColors[skillData[2]] : Colors.Gray;
+                            var fgColor = Colors.WhiteSmoke;
+                            if (skillData[3] == "Focus")
+                                fgColor = Colors.Red;
+                            else if (skillData[3] == "Spread")
+                                fgColor = Colors.Cyan;
+
+                            Run skillRun = new Run(skillData[1]);
+                            Hyperlink skillLink = new Hyperlink(skillRun)
+                            {
+                                Foreground = new SolidColorBrush(fgColor),
+                                Background = new LinearGradientBrush
+                                {
+                                    StartPoint = new System.Windows.Point(0.5, 0),
+                                    EndPoint = new System.Windows.Point(0.5, 1),
+                                    GradientStops = new GradientStopCollection
+                                    {
+                                        new GradientStop(Color.FromArgb(123, bgColor.R, bgColor.G, bgColor.B), 0.8),
+                                        new GradientStop(Color.FromArgb(234, bgColor.R, bgColor.G, bgColor.B), 1.0),
+                                    }
+                                },
+                                ToolTip = "Power: " + skillData[6] + ", Accuracy: " + skillData[5] + ", Type: " + skillData[2],
+                                TextDecorations = null,
+                                FontSize = 24,
+                                FontFamily = new FontFamily("Consolas")
+                            };
+                            stateCruns.Add(skillLink);
+                            if (j == 19 || j == 21) // Add a comma if not the last skill
+                            {
+                                stateCruns.Add(new Run("   ") { FontSize = 24 });
+                            }
+                            else if (j == 20) // Add a newline after the second skill
+                            {
+                                stateCruns.Add(new Run("\n") { FontSize = 24 });
+                            }
+                        }
+
+                        stateCruns.Add(new Run("\n\n") { FontSize = 20 });
+
+                        if (PuppetData[i][2] != "0") // Skip if the item value is 0
+                        {
+                            string itemName = GetItemName(int.Parse(PuppetData[i][2]));
+                            string itemDesc = GetItemDesc(int.Parse(PuppetData[i][2]));
+                            Run itemRun = new Run(itemName);
+                            Hyperlink itemLink = new Hyperlink(itemRun)
+                            {
+                                Foreground = Brushes.LightGray,
+                                ToolTip = itemDesc,
+                                TextDecorations = null,
+                                FontStyle = FontStyles.Italic
+                            };
+                            stateCruns.Add(itemLink);
+                        }
+
+                        Inline[] CInLine = new Inline[stateCruns.Count];
+                        for (int j = 0; j < stateCruns.Count(); j++)
+                        {
+                            CInLine[j] = stateCruns[j];
+                        }
+
+
                         textBlock.Tag = new TextToggleState
                         {
                             StateA = new Inline[] { Name, Types, eff4, eff2, eff05, eff025, eff0 },
                             StateB = statsInline,
-                            IsExpanded = false
+                            StateC = CInLine,
+                            //IsExpanded = false
+                            
                         };
 
+                        //on click state changing
                         rowGrid.MouseLeftButtonUp += (sender, e) =>
                         {
-                            // Get the TextBlock from the row
                             var row = (Grid)sender;
                             var textBlock = row.Children.OfType<TextBlock>().FirstOrDefault();
                             if (textBlock != null && textBlock.Tag is TextToggleState tag)
                             {
                                 textBlock.Inlines.Clear();
 
-                                if (tag.IsExpanded)
+                                switch (tag.CurrentState)
                                 {
-                                    foreach (Inline inline in tag.StateA)
-                                        textBlock.Inlines.Add(inline);
-                                }
-                                else
-                                {
-                                    foreach (Inline inline in tag.StateB)
-                                        textBlock.Inlines.Add(inline);
-                                }
+                                    case 0:
+                                        foreach (Inline inline in tag.StateB)
+                                            textBlock.Inlines.Add(inline);
+                                        tag.CurrentState = 1;
+                                        break;
 
-                                tag.IsExpanded = !tag.IsExpanded;
+                                    case 1:
+                                        foreach (Inline inline in tag.StateC)
+                                            textBlock.Inlines.Add(inline);
+                                        tag.CurrentState = 2;
+                                        break;
+
+                                    case 2:
+                                        foreach (Inline inline in tag.StateA)
+                                            textBlock.Inlines.Add(inline);
+                                        tag.CurrentState = 0;
+                                        break;
+                                }
                             }
 
                             e.Handled = true;
@@ -1049,6 +1208,18 @@ namespace PuppetViewerWPF
                 _player = "Enemy";
                 updateList();
             }
+        }
+
+        private void Calc_Click(object sender, RoutedEventArgs e)
+        {
+            if (_calcWindow != null && _calcWindow.IsVisible)
+            {
+                _calcWindow.Activate();
+                return;
+            }
+            _calcWindow = new Calc();
+            _calcWindow.Owner = this;
+            _calcWindow.Show();
         }
     }
 }

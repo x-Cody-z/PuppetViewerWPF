@@ -22,7 +22,7 @@
         </TextBlock>
 
         <Button FontWeight="Bold" FontSize="24" Click="Button_Click" Foreground="#bbbbbb"
-        BorderThickness="10,10,5,10" BorderBrush="#060611" Margin="0,0,132,0" Height="70" VerticalAlignment="Bottom">
+        BorderThickness="10,10,5,10" BorderBrush="#060611" Margin="0,0,198,0" Height="70" VerticalAlignment="Bottom">
             <Button.Style>
                 <Style TargetType="Button">
                     <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -97,7 +97,43 @@
                 <TextBlock><Run Text="?"/></TextBlock>
             </WrapPanel>
         </Button>
-        <Button FontWeight="Bold" FontSize="24" VerticalAlignment="Bottom" Height="70" Click="Switch_Click" Foreground="#bbbbbb" BorderThickness="5,10,5,10" BorderBrush="#060611" HorizontalAlignment="Right" Width="66" Margin="0,0,66,0">
+        <Button FontWeight="Bold" FontSize="24" VerticalAlignment="Bottom" Height="70" Click="Calc_Click" Foreground="#bbbbbb" BorderThickness="5,10,5,10" BorderBrush="#060611" HorizontalAlignment="Right" Width="66" Margin="0,0,66,0">
+            <Button.Style>
+                <Style TargetType="{x:Type Button}">
+                    <Setter Property="OverridesDefaultStyle" Value="True" />
+                    <Setter Property="Background" Value="#111122" />
+                    <Setter Property="Foreground" Value="#bbbbbb" />
+                    <Setter Property="BorderBrush" Value="#060611" />
+                    <Setter Property="BorderThickness" Value="10" />
+                    <Setter Property="Padding" Value="5" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type Button}">
+                                <Border Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#FF1A1A26" />
+                            <Setter Property="Foreground" Value="#ffffff" />
+                            <Setter Property="BorderBrush" Value="#0F0F1A" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#FF353541" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+            <WrapPanel>
+                <TextBlock><Run Text="C"/></TextBlock>
+            </WrapPanel>
+        </Button>
+        <Button FontWeight="Bold" FontSize="24" VerticalAlignment="Bottom" Height="70" Click="Switch_Click" Foreground="#bbbbbb" BorderThickness="5,10,5,10" BorderBrush="#060611" HorizontalAlignment="Right" Width="66" Margin="0,0,132,0">
             <Button.Style>
                 <Style TargetType="{x:Type Button}">
                     <Setter Property="OverridesDefaultStyle" Value="True" />
