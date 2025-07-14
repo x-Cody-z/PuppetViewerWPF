@@ -367,15 +367,18 @@ namespace PuppetViewerWPF
             string[] playerPuppetTypes = _mainWindow.GetPuppetData(_playerData[_playerIndex][0], _playerData[_playerIndex][1]);
             string[] enemyPuppetTypes = _mainWindow.GetPuppetData(_enemyData[_enemyIndex][0], _enemyData[_enemyIndex][1]);
 
+            string[] atkPuppetTypes = side == "Player" ? playerPuppetTypes : enemyPuppetTypes;
+            string[] defPuppetTypes = side == "Player" ? enemyPuppetTypes : playerPuppetTypes;
+
             // Get the skill type from skillData
             string skillType = skillData[2]; // Element of the skill
 
             // Calculate effectiveness based on the skill type and defender's types
-            double effectiveness = TypeEffectiveness.GetAttackEffectiveness(skillType, enemyPuppetTypes[0], enemyPuppetTypes[1]);
+            double effectiveness = TypeEffectiveness.GetAttackEffectiveness(skillType, defPuppetTypes[0], defPuppetTypes[1]);
 
             // Calculate STAB (Same Type Attack Bonus)
             double stab = 1.0; // Default STAB value
-            if (playerPuppetTypes.Contains(skillType))
+            if (atkPuppetTypes.Contains(skillType))
             {
                 stab = 1.5; // STAB bonus if the skill type matches the attacker's type
             }
