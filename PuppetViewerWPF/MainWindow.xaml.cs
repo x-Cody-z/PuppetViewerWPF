@@ -325,7 +325,8 @@ namespace PuppetViewerWPF
             };
         }
 
-        private string[] GetSkillData(string skillId)
+        //id, name, element, type, sp, accuracy, power, prio, effectchance, effectid, effecttarget, ynk classificaiton
+        public string[] GetSkillData(string skillId)
         {
             JArray skills = _jsonObjectSkills["skills"] as JArray;
             if (skills == null)
@@ -460,7 +461,7 @@ namespace PuppetViewerWPF
                 return null;
             }
         }
-        private List<int> GetPuppetBaseStats(string puppet_id, string style_index)
+        public List<int> GetPuppetBaseStats(string puppet_id, string style_index)
         {
             string id = puppet_id;
             int index = int.Parse(style_index);
@@ -488,7 +489,7 @@ namespace PuppetViewerWPF
                 return null;
             }
         }
-        private string[] GetPuppetData(string puppet_id, string style_index)
+        public string[] GetPuppetData(string puppet_id, string style_index)
         {
             string[] result = new string[2];
             
@@ -1217,7 +1218,7 @@ namespace PuppetViewerWPF
                 _calcWindow.Activate();
                 return;
             }
-            _calcWindow = new Calc();
+            _calcWindow = new Calc(this, LoadCSVEnemyData("Player"), LoadCSVEnemyData("Enemy"));
             _calcWindow.Owner = this;
             _calcWindow.Show();
         }

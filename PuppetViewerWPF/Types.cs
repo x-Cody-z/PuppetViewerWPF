@@ -60,7 +60,20 @@ namespace PuppetViewerWPF
                 return effectivenessMatrix[row, col];
             }
 
-            public static Dictionary<PuppetType, double> GetAllAttackEffectivenessAgainstDualTypes(string defenderType1, string defenderType2)
+        public static double GetAttackEffectiveness(string attackerType, string defenderType1, string defenderType2)
+        {
+            if (!Enum.TryParse(attackerType, out PuppetType atk) || !Enum.TryParse(defenderType1, out PuppetType def1) || !Enum.TryParse(defenderType2, out PuppetType def2))
+            {
+                return 1.0; // Default effectiveness if types are invalid
+                throw new ArgumentException("Invalid type name(s).");
+            }
+
+            double eff1 = GetEffectiveness(atk, def1);
+            double eff2 = GetEffectiveness(atk, def2);
+            return eff1 * eff2;
+        }
+
+        public static Dictionary<PuppetType, double> GetAllAttackEffectivenessAgainstDualTypes(string defenderType1, string defenderType2)
             {
                 if (!Enum.TryParse(defenderType1, out PuppetType def1) || !Enum.TryParse(defenderType2, out PuppetType def2))
                 {

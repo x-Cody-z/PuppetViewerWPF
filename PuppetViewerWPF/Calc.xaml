@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PuppetViewerWPF"
         mc:Ignorable="d"
-        Title="Damage Calculator" Height="600" Width="1200">
-    <Grid Margin="10">
+        Title="Damage Calculator" Height="600" Width="1200" Background="#060611">
+    <Grid Margin="10" Background="#111122">
         <Grid.RowDefinitions>
             <RowDefinition Height="3*"/>
             <!-- Top Buttons + Title -->
@@ -24,26 +24,26 @@
 
             <!-- Left Buttons -->
             <UniformGrid Grid.Column="0" Columns="3" Rows="2">
-                <Button Content="B1" Click="Button_Click"/>
-                <Button Content="B2"/>
-                <Button Content="B3"/>
-                <Button Content="B4"/>
-                <Button Content="B5"/>
-                <Button Content="B6"/>
+                <Button Name="P1" Content="P1" Click="Puppet_Click"/>
+                <Button Name="P2" Content="P2" Click="Puppet_Click"/>
+                <Button Name="P3" Content="P3" Click="Puppet_Click"/>
+                <Button Name="P4" Content="P4" Click="Puppet_Click"/>
+                <Button Name="P5" Content="P5" Click="Puppet_Click"/>
+                <Button Name="P6" Content="P6" Click="Puppet_Click"/>
             </UniformGrid>
 
             <!-- Title -->
-            <TextBlock Grid.Column="1" Text="Title" FontSize="24" FontStyle="Italic" 
-                       VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20"/>
+            <TextBlock Grid.Column="1" Text="Damage Calculator" FontSize="24" FontStyle="Italic" 
+                       VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20" Foreground="#dddddd"/>
 
             <!-- Right Buttons -->
             <UniformGrid Grid.Column="2" Columns="3" Rows="2">
-                <Button Content="Ba"/>
-                <Button Content="Bb"/>
-                <Button Content="Bc"/>
-                <Button Content="Bd"/>
-                <Button Content="Be"/>
-                <Button Content="Bf"/>
+                <Button Name="E1" Content="E1" Click="Puppet_Click"/>
+                <Button Name="E2" Content="E2" Click="Puppet_Click"/>
+                <Button Name="E3" Content="E3" Click="Puppet_Click"/>
+                <Button Name="E4" Content="E4" Click="Puppet_Click"/>
+                <Button Name="E5" Content="E5" Click="Puppet_Click"/>
+                <Button Name="E6" Content="E6" Click="Puppet_Click"/>
             </UniformGrid>
         </Grid>
 
@@ -61,37 +61,63 @@
                 <!-- Stats Grid -->
                 <Border BorderBrush="Gray" BorderThickness="1">
                     <UniformGrid Columns="6">
-                        <TextBlock Text="HP" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="FOA" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="FOD" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="SPA" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="SPD" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="SPE" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="HP" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="FOA" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="FOD" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="SPA" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="SPD" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="SPE" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
                     </UniformGrid>
                 </Border>
                 <UniformGrid Columns="6" Margin="0,5,0,10">
-                    <TextBlock Text="35" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="50" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="65" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="30" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="60" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="30" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="P_HP" Text="35" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="P_FOA" Text="50" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="P_FOD" Text="65" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="P_SPA" Text="30" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="P_SPD" Text="60" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="P_SPE" Text="30" TextAlignment="Center" FontSize="16"/>
                 </UniformGrid>
 
 
-                <Border Grid.Row="1" Height="1" Background="Gray" Margin="0,20"/>
+                <Border Grid.Row="1" Height="2" Background="#060611" Margin="0,20"/>
 
                 <!-- Skills -->
                 <StackPanel>
-                    <TextBlock FontSize="24" Margin="0,10,0,10"><Run Text="Skill1 "/><Run FontStyle="Italic" Text="Skill1Info"/></TextBlock>
-                    <TextBlock FontSize="24" Margin="0,10,0,10"><Run Text="Skill2 "/><Run FontStyle="Italic" Text="Skill2Info"/></TextBlock>
-                    <TextBlock FontSize="24" Margin="0,10,0,10"><Run Text="Skill3 "/><Run FontStyle="Italic" Text="Skill3Info"/></TextBlock>
-                    <TextBlock FontSize="24" Margin="0,10,0,10"><Run Text="Skill4 "/><Run FontStyle="Italic" Text="Skill4Info"/></TextBlock>
+                    <Grid Margin="0,5,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="3*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="P_Skill_Name1" Text="P_Skill1"/></TextBlock>
+                            <TextBlock Grid.Row="1" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="P_Skill_Name2" Text="P_Skill2"/></TextBlock>
+                            <TextBlock Grid.Row="2" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="P_Skill_Name3" Text="P_Skill3"/></TextBlock>
+                            <TextBlock Grid.Row="3" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="P_Skill_Name4" Text="P_Skill4"/></TextBlock>
+                        </Grid>
+                        <Grid Grid.Column="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="P_Skill_Info1" FontStyle="Italic" Text="P_Skill1Info"/></TextBlock>
+                            <TextBlock Grid.Row="1" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="P_Skill_Info2" FontStyle="Italic" Text="P_Skill2Info"/></TextBlock>
+                            <TextBlock Grid.Row="2" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="P_Skill_Info3" FontStyle="Italic" Text="P_Skill3Info"/></TextBlock>
+                            <TextBlock Grid.Row="3" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="P_Skill_Info4" FontStyle="Italic" Text="P_Skill4Info"/></TextBlock>
+                        </Grid>
+                    </Grid>
                 </StackPanel>
             </StackPanel>
 
             <!-- Separator between Left and Right -->
-            <Border Grid.Column="1" Width="1" Background="Gray" Margin="20,0"/>
+            <Border Grid.Column="1" Width="2" Background="#060611" Margin="20,0,20,20"/>
 
 
             <!-- Right Stats & Skills (Duplicate of Left) -->
@@ -99,30 +125,56 @@
 
                 <Border BorderBrush="Gray" BorderThickness="1">
                     <UniformGrid Columns="6">
-                        <TextBlock Text="HP" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="FOA" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="FOD" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="SPA" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="SPD" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
-                        <TextBlock Text="SPE" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="HP" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="FOA" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="FOD" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="SPA" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="SPD" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Foreground="#dddddd" Text="SPE" TextAlignment="Center" FontSize="18" FontWeight="Bold"/>
                     </UniformGrid>
                 </Border>
                 <UniformGrid Columns="6" Margin="0,5,0,10">
-                    <TextBlock Text="35" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="50" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="65" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="30" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="60" TextAlignment="Center" FontSize="16"/>
-                    <TextBlock Text="30" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="E_HP"  Text="35" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="E_FOA" Text="50" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="E_FOD" Text="65" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="E_SPA" Text="30" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="E_SPD" Text="60" TextAlignment="Center" FontSize="16"/>
+                    <TextBlock Foreground="#dddddd" Name="E_SPE" Text="30" TextAlignment="Center" FontSize="16"/>
                 </UniformGrid>
 
-                <Border Grid.Row="1" Height="1" Background="Gray" Margin="0,20"/>
+                <Border Grid.Row="1" Height="2" Background="#060611" Margin="0,20"/>
 
                 <StackPanel>
-                    <TextBlock FontSize="24" Margin="0,10,0,10"><Run Text="Skill1 "/><Run FontStyle="Italic" Text="Skill1Info"/></TextBlock>
-                    <TextBlock FontSize="24" Margin="0,10,0,10"><Run Text="Skill2 "/><Run FontStyle="Italic" Text="Skill2Info"/></TextBlock>
-                    <TextBlock FontSize="24" Margin="0,10,0,10"><Run Text="Skill3 "/><Run FontStyle="Italic" Text="Skill3Info"/></TextBlock>
-                    <TextBlock FontSize="24" Margin="0,10,0,10"><Run Text="Skill4 "/><Run FontStyle="Italic" Text="Skill4Info"/></TextBlock>
+                    <Grid Margin="0,5,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="3*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="E_Skill_Name1" Text="E_Skill1"/></TextBlock>
+                            <TextBlock Grid.Row="1" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="E_Skill_Name2" Text="E_Skill2"/></TextBlock>
+                            <TextBlock Grid.Row="2" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="E_Skill_Name3" Text="E_Skill3"/></TextBlock>
+                            <TextBlock Grid.Row="3" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="E_Skill_Name4" Text="E_Skill4"/></TextBlock>
+                        </Grid>
+                        <Grid Grid.Column="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="E_Skill_Info1" FontStyle="Italic" Text="E_Skill1Info"/></TextBlock>
+                            <TextBlock Grid.Row="1" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="E_Skill_Info2" FontStyle="Italic" Text="E_Skill2Info"/></TextBlock>
+                            <TextBlock Grid.Row="2" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="E_Skill_Info3" FontStyle="Italic" Text="E_Skill3Info"/></TextBlock>
+                            <TextBlock Grid.Row="3" FontSize="20" Margin="0,10,0,10" Foreground="#dddddd"><Run Name="E_Skill_Info4" FontStyle="Italic" Text="E_Skill4Info"/></TextBlock>
+                        </Grid>
+                    </Grid>
                 </StackPanel>
             </StackPanel>
         </Grid>
