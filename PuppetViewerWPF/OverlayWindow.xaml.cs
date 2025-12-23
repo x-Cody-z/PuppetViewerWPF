@@ -50,15 +50,31 @@ namespace PuppetViewerWPF
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
         }
 
+        // DPI Scaling Helpers, to fix windows scaling issues at non-100% settings
+        private double GetDpiScaleX()
+        {
+            var source = PresentationSource.FromVisual(this);
+            return source?.CompositionTarget?.TransformFromDevice.M11 ?? 1.0;
+        }
+
+        private double GetDpiScaleY()
+        {
+            var source = PresentationSource.FromVisual(this);
+            return source?.CompositionTarget?.TransformFromDevice.M22 ?? 1.0;
+        }
+
         private void UpdateOverlayPosition()
         {
             IntPtr hwnd = FindWindowByTitle(targetWindowTitle);
             if (hwnd != IntPtr.Zero && GetWindowRect(hwnd, out RECT rect))
             {
-                this.Left = rect.Left;
-                this.Top = rect.Top;
-                this.Width = rect.Right - rect.Left;
-                this.Height = rect.Bottom - rect.Top;
+                double scaleX = GetDpiScaleX();
+                double scaleY = GetDpiScaleY();
+
+                this.Left = rect.Left * scaleX;
+                this.Top = rect.Top * scaleY;
+                this.Width = (rect.Right - rect.Left) * scaleX;
+                this.Height = (rect.Bottom - rect.Top) * scaleY;
 
                 var thisHwnd = new WindowInteropHelper(this).Handle;
                 SetWindowPos(thisHwnd, HWND_TOPMOST, 0, 0, 0, 0,
@@ -122,10 +138,14 @@ namespace PuppetViewerWPF
                     isOverlayVisible = true;
                 }
 
-                this.Left = rect.Left;
-                this.Top = rect.Top;
-                this.Width = rect.Right - rect.Left;
-                this.Height = rect.Bottom - rect.Top;
+                double scaleX = GetDpiScaleX();
+                double scaleY = GetDpiScaleY();
+
+                this.Left = rect.Left * scaleX;
+                this.Top = rect.Top * scaleY;
+                this.Width = (rect.Right - rect.Left) * scaleX;
+                this.Height = (rect.Bottom - rect.Top) * scaleY;
+
 
                 var thisHwnd = new WindowInteropHelper(this).Handle;
                 SetWindowPos(thisHwnd, HWND_TOPMOST, 0, 0, 0, 0,
